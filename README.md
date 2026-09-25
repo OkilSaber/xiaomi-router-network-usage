@@ -107,6 +107,24 @@ python build.py
 Génère l'archive `dist/xiaomi-dashboard-windows-x86_64.zip`.
 
 ---
+
+## 🧹 Nettoyage du projet
+
+Pour supprimer les dossiers temporaires de build (`dist/`, `build/`, `*.spec`, caches Python) :
+
+```bash
+# Linux / macOS
+./clean.sh
+
+# Windows
+clean.bat
+
+# Multiplateforme (Python)
+python clean.py
+```
+
+> **Astuce** : Ajoutez `--all` pour nettoyer également les fichiers de configuration locaux (`config.json`, `device_aliases.json`).
+
 ---
 
 ## 📄 Licence
