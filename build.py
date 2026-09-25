@@ -18,14 +18,58 @@ BUILD_DIR = os.path.join(PROJECT_DIR, "build")
 ENTRY_POINT = os.path.join(PROJECT_DIR, "xiaomi_wifi_dashboard.py")
 APP_NAME = "xiaomi_dashboard"
 
-def check_pyinstaller():
+def check_pip():
+    """Vérifie si pip est disponible sans jamais tenter de l'installer."""
     try:
-        import PyInstaller
-        print(f"✅ PyInstaller {PyInstaller.__version__} détecté.")
-    except ImportError:
-        print("❌ PyInstaller n'est pas installé dans l'environnement Python courant.")
-        print("Installation via: pip install pyinstaller")
+        subprocess.check_call([sys.executable, "-m", "pip", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except Exception:
+        return False
+
+def check_dependencies():
+    """Vérifie si tous les modules requis sont déjà importables."""
+    required_modules = [
+        ("PyInstaller", "pyinstaller"),
+        ("flask", "Flask"),
+        ("requests", "requests"),
+        ("urllib3", "urllib3"),
+        ("mac_vendor_lookup", "mac-vendor-lookup"),
+        ("webview", "pywebview"),
+    ]
+    missing = []
+    for mod_name, pkg_name in required_modules:
+        try:
+            __import__(mod_name)
+        except ImportError:
+            missing.append(pkg_name)
+    return missing
+
+def ensure_environment():
+    print("🔍 Vérification de l'environnement de build...")
+
+    # 1. Vérification stricte de pip (PAS d'installation de pip si absent)
+    if not check_pip():
+        print("❌ Erreur : 'pip' n'est pas disponible dans cet environnement Python.")
+        print(f"   Interpréteur utilisé : {sys.executable}")
+        print("   Veuillez installer pip manuellement ou activer un environnement virtuel le contenant.")
         sys.exit(1)
+    print("✅ pip détecté.")
+
+    # 2. Vérification des dépendances et de PyInstaller
+    missing = check_dependencies()
+    if missing:
+        print(f"📦 Dépendances manquantes détectées : {', '.join(missing)}")
+        req_file = os.path.join(PROJECT_DIR, "requirements.txt")
+        pip_cmd = [sys.executable, "-m", "pip", "install"]
+        if os.path.exists(req_file):
+            pip_cmd.extend(["-r", req_file])
+        pip_cmd.append("pyinstaller")
+
+        print("⏳ Installation automatique des dépendances manquantes via pip...")
+        subprocess.check_call(pip_cmd)
+        print("✅ Toutes les dépendances et PyInstaller ont été installés avec succès.")
+    else:
+        print("✅ Toutes les dépendances (requirements.txt + PyInstaller) sont déjà satisfaites.")
 
 def build_executable():
     print(f"🔨 Compilation pour la plateforme : {platform.system()} ({platform.machine()})...")
@@ -255,7 +299,7 @@ def package_release():
         print(f"🎉 Release macOS ZIP créée : {archive_path}")
 
 def main():
-    check_pyinstaller()
+    ensure_environment()
     build_executable()
     package_release()
 

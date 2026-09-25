@@ -14,8 +14,18 @@ fi
 
 PYTHON="$VENV_DIR/bin/python"
 
-echo "Installation/mise à jour des dépendances dans le venv..."
-"$PYTHON" -m pip install -r "$DIR/requirements.txt" pyinstaller
+# 1. Vérification stricte de pip (PAS d'installation de pip)
+if ! "$PYTHON" -m pip --version >/dev/null 2>&1; then
+    echo "❌ Erreur : 'pip' n'est pas disponible dans l'environnement Python ($PYTHON)."
+    echo "   Veuillez installer pip ou utiliser un interpréteur Python incluant pip."
+    exit 1
+fi
+
+# 2. Vérification des dépendances et de PyInstaller (installation uniquement si nécessaire)
+if ! "$PYTHON" -c "import PyInstaller, flask, requests, urllib3, mac_vendor_lookup, webview" >/dev/null 2>&1; then
+    echo "📦 Installation des dépendances nécessaires et de PyInstaller..."
+    "$PYTHON" -m pip install -r "$DIR/requirements.txt" pyinstaller
+fi
 
 "$PYTHON" "$DIR/build.py"
 
