@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+bin/
+lib/
+lib64
+lib64/
+include/
+pyvenv.cfg
+env/
+venv/
+.venv/
+
+# PyInstaller & Build artifacts
+build/
+dist/
+*.spec
+xiaomi_dashboard
+xiaomi_dashboard.exe
+
+# Cache & Runtime Data
+cache/
+.cache/
+*.log
+
+# Sensitive / User-specific configuration
+config.json
+device_aliases.json
+.env
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

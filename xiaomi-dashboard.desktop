@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Xiaomi Wi-Fi Dashboard
+Comment=Surveillance du débit et des appareils du routeur Xiaomi
+Exec=xiaomi_dashboard
+Icon=xiaomi-dashboard
+Terminal=false
+Type=Application
+Categories=Network;Monitor;
+StartupNotify=true
+Keywords=xiaomi;router;wifi;network;monitor;

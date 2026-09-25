@@ -1,0 +1,91 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: xiaomi-dashboard-linux-x86_64.tar.gz
+            asset_path: dist/xiaomi-dashboard-linux-x86_64.tar.gz
+          - os: windows-latest
+            artifact_name: xiaomi-dashboard-windows-x86_64.zip
+            asset_path: dist/xiaomi-dashboard-windows-x86_64.zip
+          - os: macos-latest
+            artifact_name: xiaomi-dashboard-macos-x86_64.zip
+            asset_path: dist/xiaomi-dashboard-macos-x86_64.zip
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgirepository1.0-dev libcairo2-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Application
+        run: |
+          python build.py
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.asset_path }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_assets/
+
+      - name: Prepare Assets
+        run: |
+          mkdir -p release_final
+          find release_assets/ -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec cp {} release_final/ \;
+          ls -la release_final/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || 'v1.0.0' }}
+          name: Release ${{ github.ref_name || 'v1.0.0' }}
+          draft: false
+          prerelease: false
+          files: release_final/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
