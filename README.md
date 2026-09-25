@@ -107,12 +107,6 @@ python build.py
 Génère l'archive `dist/xiaomi-dashboard-windows-x86_64.zip`.
 
 ---
-
-## 🔄 Intégration Continue (GitHub Actions)
-
-Un workflow CI/CD (`.github/workflows/build-and-release.yml`) est configuré :
-- Lors de chaque publication de tag `v*` (ex: `git tag v1.0.0 && git push origin v1.0.0`), le workflow compile automatiquement les binaires sous **Linux**, **macOS** et **Windows** et crée une **GitHub Release** avec les archives téléchargeables.
-
 ---
 
 ## 📄 Licence
