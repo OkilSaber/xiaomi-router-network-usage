@@ -27,6 +27,7 @@ FILES_PATTERNS_TO_REMOVE = [
     "*.pyo",
     "*.pyd",
     "*.log",
+    "*.dmg",
     ".DS_Store",
     "Thumbs.db",
     "xiaomi_dashboard",

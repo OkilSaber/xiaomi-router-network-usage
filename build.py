@@ -107,6 +107,74 @@ def build_executable():
 
     print("✅ Compilation de l'exécutable terminée avec succès.")
 
+def create_macos_dmg(app_path, dmg_path, volume_name="Xiaomi Wi-Fi Dashboard"):
+    if not os.path.exists(app_path):
+        print(f"⚠️ Impossible de créer le DMG : {app_path} introuvable.")
+        return
+
+    if os.path.exists(dmg_path):
+        try:
+            os.remove(dmg_path)
+        except Exception:
+            pass
+
+    print(f"📀 Création de l'installateur DMG macOS : {dmg_path}...")
+
+    # 1. Tentative avec create-dmg (présentation soignée et signature)
+    create_dmg_bin = shutil.which("create-dmg")
+    if create_dmg_bin:
+        try:
+            print("  Utilisation de 'create-dmg' pour une présentation optimale...")
+            cmd = [
+                create_dmg_bin,
+                "--overwrite",
+                "--no-version-in-filename",
+                "--dmg-title", volume_name,
+                app_path,
+                DIST_DIR
+            ]
+            subprocess.check_call(cmd)
+            default_dmg = os.path.join(DIST_DIR, f"{volume_name}.dmg")
+            if os.path.exists(default_dmg):
+                if os.path.abspath(default_dmg) != os.path.abspath(dmg_path):
+                    shutil.move(default_dmg, dmg_path)
+                print(f"🎉 Installateur DMG macOS créé avec succès : {dmg_path}")
+                return
+        except Exception as e:
+            print(f"  ⚠️ create-dmg a échoué ({e}), basculement sur hdiutil...")
+
+    # 2. Repli natif macOS via hdiutil
+    staging_dir = os.path.join(DIST_DIR, ".dmg_staging")
+    if os.path.exists(staging_dir):
+        shutil.rmtree(staging_dir)
+    os.makedirs(staging_dir, exist_ok=True)
+
+    dest_app = os.path.join(staging_dir, os.path.basename(app_path))
+    shutil.copytree(app_path, dest_app, symlinks=True)
+
+    # Lien symbolique vers /Applications pour drag & drop
+    try:
+        os.symlink("/Applications", os.path.join(staging_dir, "Applications"))
+    except Exception:
+        pass
+
+    try:
+        hdiutil_cmd = [
+            "hdiutil", "create",
+            "-volname", volume_name,
+            "-srcfolder", staging_dir,
+            "-ov",
+            "-format", "UDZO",
+            dmg_path
+        ]
+        subprocess.check_call(hdiutil_cmd)
+        print(f"🎉 Installateur DMG macOS créé avec succès via hdiutil : {dmg_path}")
+    except Exception as e:
+        print(f"❌ Échec de création du DMG : {e}")
+    finally:
+        if os.path.exists(staging_dir):
+            shutil.rmtree(staging_dir)
+
 def package_release():
     current_os = platform.system().lower()
     machine = platform.machine().lower()
@@ -161,10 +229,16 @@ def package_release():
     elif current_os == "darwin":
         exe_path = os.path.join(DIST_DIR, APP_NAME)
         app_path = os.path.join(DIST_DIR, f"{APP_NAME}.app")
+        dmg_name = f"xiaomi-dashboard-macos-{arch}.dmg"
+        dmg_path = os.path.join(DIST_DIR, dmg_name)
         archive_name = f"xiaomi-dashboard-macos-{arch}.zip"
         archive_path = os.path.join(DIST_DIR, archive_name)
 
-        print(f"📦 Création de l'archive Release : {archive_path}...")
+        # Création de l'installateur .dmg
+        create_macos_dmg(app_path, dmg_path)
+
+        # Création de l'archive .zip
+        print(f"📦 Création de l'archive Release ZIP : {archive_path}...")
         with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             if os.path.exists(app_path):
                 for root, dirs, files in os.walk(app_path):
@@ -178,7 +252,7 @@ def package_release():
                 zipf.write(os.path.join(PROJECT_DIR, "config.example.json"), arcname="config.example.json")
             if os.path.exists(os.path.join(PROJECT_DIR, "README.md")):
                 zipf.write(os.path.join(PROJECT_DIR, "README.md"), arcname="README.md")
-        print(f"🎉 Release macOS créée : {archive_path}")
+        print(f"🎉 Release macOS ZIP créée : {archive_path}")
 
 def main():
     check_pyinstaller()

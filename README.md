@@ -111,8 +111,9 @@ Le projet propose des scripts de compilation 100% autonomes et locaux utilisant 
 ```
 - Crée un environnement virtuel local si nécessaire.
 - Compile un bundle natif instantané `dist/xiaomi_dashboard.app` avec l'icône haute résolution `.icns`.
+- **Génère l'installateur image disque `dist/xiaomi-dashboard-macos-<arch>.dmg`** avec glisser-déposer vers `/Applications`.
 - Génère un wrapper CLI exécutable `dist/xiaomi_dashboard`.
-- Crée une archive prête à distribuer `dist/xiaomi-dashboard-macos-<arch>.zip`.
+- Crée une archive portable `dist/xiaomi-dashboard-macos-<arch>.zip`.
 
 ### 🐧 Linux
 ```bash

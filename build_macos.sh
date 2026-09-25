@@ -19,5 +19,5 @@ echo "Installation/mise à jour des dépendances dans le venv..."
 
 "$PYTHON" "$DIR/build.py"
 
-echo "=== Build macOS terminé avec succès dans $DIR/dist ==="
+echo "=== Build macOS terminé avec succès (.app & .dmg dans $DIR/dist) ==="
 
