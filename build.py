@@ -35,10 +35,13 @@ def build_executable():
     static_src = os.path.join(PROJECT_DIR, "static")
     add_data_arg = f"{static_src}{sep}static"
 
+    current_os = platform.system()
+    mode_arg = "--onedir" if current_os == "Darwin" else "--onefile"
+
     pyinstaller_cmd = [
         sys.executable, "-m", "PyInstaller",
         "--name", APP_NAME,
-        "--onefile",
+        mode_arg,
         "--noconfirm",
         "--clean",
         "--add-data", add_data_arg,
@@ -50,12 +53,19 @@ def build_executable():
     ]
 
     # Options spécifiques selon l'OS
-    current_os = platform.system()
+    icon_win = os.path.join(PROJECT_DIR, "assets", "icon.ico")
+    icon_mac = os.path.join(PROJECT_DIR, "assets", "icon.icns")
+
     if current_os == "Windows":
         # Mode fenêtré sans invite de commande
         pyinstaller_cmd.extend(["--windowed"])
+        if os.path.exists(icon_win):
+            pyinstaller_cmd.extend(["--icon", icon_win])
     elif current_os == "Darwin":
-        pyinstaller_cmd.extend(["--windowed"])
+        # Sur macOS, mode onedir + windowed crée un vrai bundle .app natif instantané
+        pyinstaller_cmd.extend(["--windowed", "--osx-bundle-identifier", "com.xiaomi.dashboard"])
+        if os.path.exists(icon_mac):
+            pyinstaller_cmd.extend(["--icon", icon_mac])
     elif current_os == "Linux":
         # Sur Linux on garde la console ou windowed
         pass
@@ -64,6 +74,37 @@ def build_executable():
 
     print("Exécution de : " + " ".join(pyinstaller_cmd))
     subprocess.check_call(pyinstaller_cmd, cwd=PROJECT_DIR)
+
+    if current_os == "Darwin":
+        app_path = os.path.join(DIST_DIR, f"{APP_NAME}.app")
+        info_plist_path = os.path.join(app_path, "Contents", "Info.plist")
+        if os.path.exists(info_plist_path):
+            import plistlib
+            with open(info_plist_path, "rb") as f:
+                pl = plistlib.load(f)
+            pl["NSAppTransportSecurity"] = {"NSAllowsArbitraryLoads": True}
+            pl["CFBundleDisplayName"] = "Xiaomi Wi-Fi Dashboard"
+            with open(info_plist_path, "wb") as f:
+                plistlib.dump(pl, f)
+
+        try:
+            subprocess.run(["codesign", "--force", "--deep", "--sign", "-", app_path], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+
+        # Nettoyage et création d'un wrapper script CLI dist/xiaomi_dashboard
+        cli_wrapper = os.path.join(DIST_DIR, APP_NAME)
+        if os.path.isdir(cli_wrapper):
+            shutil.rmtree(cli_wrapper)
+        elif os.path.exists(cli_wrapper):
+            os.remove(cli_wrapper)
+
+        with open(cli_wrapper, "w") as f:
+            f.write('#!/bin/bash\n')
+            f.write('DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n')
+            f.write(f'exec "$DIR/{APP_NAME}.app/Contents/MacOS/{APP_NAME}" "$@"\n')
+        os.chmod(cli_wrapper, 0o755)
+
     print("✅ Compilation de l'exécutable terminée avec succès.")
 
 def package_release():
@@ -89,6 +130,8 @@ def package_release():
                 tar.add(exe_path, arcname=APP_NAME)
             if os.path.exists(os.path.join(PROJECT_DIR, "xiaomi-dashboard.desktop")):
                 tar.add(os.path.join(PROJECT_DIR, "xiaomi-dashboard.desktop"), arcname="xiaomi-dashboard.desktop")
+            if os.path.exists(os.path.join(PROJECT_DIR, "assets", "icon.png")):
+                tar.add(os.path.join(PROJECT_DIR, "assets", "icon.png"), arcname="icon.png")
             if os.path.exists(os.path.join(PROJECT_DIR, "static")):
                 tar.add(os.path.join(PROJECT_DIR, "static"), arcname="static")
             if os.path.exists(os.path.join(PROJECT_DIR, "config.example.json")):
@@ -107,6 +150,8 @@ def package_release():
         with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             if os.path.exists(exe_path):
                 zipf.write(exe_path, arcname=exe_name)
+            if os.path.exists(os.path.join(PROJECT_DIR, "assets", "icon.ico")):
+                zipf.write(os.path.join(PROJECT_DIR, "assets", "icon.ico"), arcname="icon.ico")
             if os.path.exists(os.path.join(PROJECT_DIR, "config.example.json")):
                 zipf.write(os.path.join(PROJECT_DIR, "config.example.json"), arcname="config.example.json")
             if os.path.exists(os.path.join(PROJECT_DIR, "README.md")):

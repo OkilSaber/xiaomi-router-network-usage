@@ -3,7 +3,9 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$DIR"
 
-if [ -x "$DIR/dist/xiaomi_dashboard" ]; then
+if [ -d "$DIR/dist/xiaomi_dashboard.app" ] && [ "$(uname)" = "Darwin" ] && [ $# -eq 0 ]; then
+    open "$DIR/dist/xiaomi_dashboard.app"
+elif [ -x "$DIR/dist/xiaomi_dashboard" ]; then
     exec "$DIR/dist/xiaomi_dashboard" "$@"
 elif [ -x "$DIR/xiaomi_dashboard" ]; then
     exec "$DIR/xiaomi_dashboard" "$@"

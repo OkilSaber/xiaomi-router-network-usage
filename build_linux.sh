@@ -6,22 +6,16 @@ cd "$DIR"
 
 echo "=== Build Xiaomi Wi-Fi Dashboard (Linux) ==="
 
-# Sélectionner l'interpréteur Python
-if [ -x "$DIR/bin/python" ]; then
-    PYTHON="$DIR/bin/python"
-elif [ -x "$DIR/.venv/bin/python" ]; then
-    PYTHON="$DIR/.venv/bin/python"
-elif command -v python3 >/dev/null 2>&1; then
-    PYTHON="python3"
-else
-    PYTHON="python"
+VENV_DIR="$DIR/.venv"
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Création de l'environnement virtuel local dans $VENV_DIR..."
+    python3 -m venv "$VENV_DIR"
 fi
 
-# Vérification ou installation de PyInstaller
-if ! "$PYTHON" -c "import PyInstaller" 2>/dev/null; then
-    echo "Installation de PyInstaller..."
-    "$PYTHON" -m pip install pyinstaller
-fi
+PYTHON="$VENV_DIR/bin/python"
+
+echo "Installation/mise à jour des dépendances dans le venv..."
+"$PYTHON" -m pip install -r "$DIR/requirements.txt" pyinstaller
 
 # Exécution du script de build
 "$PYTHON" "$DIR/build.py"

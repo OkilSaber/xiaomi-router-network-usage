@@ -247,6 +247,7 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xiaomi Wi-Fi Dashboard</title>
+    <link rel="icon" type="image/png" href="/static/icon.png">
     <script src="/static/chart.min.js"></script>
     <script>
         if (typeof Chart === 'undefined') {
@@ -1221,13 +1222,23 @@ def main():
                 height=850,
                 min_size=(950, 650)
             )
+            def bring_to_front():
+                if sys.platform == 'darwin':
+                    try:
+                        from AppKit import NSApplication, NSApplicationActivationPolicyRegular
+                        ns_app = NSApplication.sharedApplication()
+                        ns_app.setActivationPolicy_(NSApplicationActivationPolicyRegular)
+                        ns_app.activateIgnoringOtherApps_(True)
+                    except Exception:
+                        pass
+
             if sys.platform.startswith('linux'):
                 try:
                     webview.start(gui='gtk')
                 except Exception:
                     webview.start()
             else:
-                webview.start()
+                webview.start(bring_to_front)
         except Exception as e:
             print(f"⚠️  Impossible d'ouvrir l'interface graphique native ({e}).")
             print("🚀 Basculement automatique en mode serveur web...")
