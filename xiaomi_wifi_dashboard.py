@@ -1,5 +1,26 @@
 import os
 import sys
+
+# Configuration securisee de l'encodage stdout/stderr pour Windows et consoles non-UTF-8
+if sys.platform == 'win32':
+    try:
+        if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if sys.stdout is None:
+    try:
+        sys.stdout = open(os.devnull, 'w', encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if sys.stderr is None:
+    try:
+        sys.stderr = open(os.devnull, 'w', encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 import time
 import requests
 import urllib3
@@ -1208,13 +1229,13 @@ def main():
         sys.exit(0)
 
     if "--server" in sys.argv or "--web" in sys.argv:
-        print("🚀 Lancement du dashboard Wi-Fi en mode serveur web...")
-        print("👉 Ouvre ton navigateur à l'adresse : http://localhost:5000")
+        print("[*] Lancement du dashboard Wi-Fi en mode serveur web...")
+        print("    Ouvre ton navigateur a l'adresse : http://localhost:5000")
         app.run(host='0.0.0.0', port=5000, debug=False)
     else:
         try:
             import webview
-            print("🖥️  Ouverture de la fenêtre graphique Xiaomi Wi-Fi Dashboard...")
+            print("[*] Ouverture de la fenetre graphique Xiaomi Wi-Fi Dashboard...")
             window = webview.create_window(
                 title='Xiaomi Wi-Fi Dashboard',
                 url=app,
@@ -1240,9 +1261,9 @@ def main():
             else:
                 webview.start(bring_to_front)
         except Exception as e:
-            print(f"⚠️  Impossible d'ouvrir l'interface graphique native ({e}).")
-            print("🚀 Basculement automatique en mode serveur web...")
-            print("👉 Ouvre ton navigateur à l'adresse : http://localhost:5000")
+            print(f"[!] Impossible d'ouvrir l'interface graphique native ({e}).")
+            print("[*] Basculement automatique en mode serveur web...")
+            print("    Ouvre ton navigateur a l'adresse : http://localhost:5000")
             app.run(host='0.0.0.0', port=5000, debug=False)
 
 if __name__ == '__main__':

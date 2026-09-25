@@ -6,6 +6,17 @@ Supprime les artefacts de build, fichiers de cache et fichiers temporaires.
 
 import os
 import sys
+
+# Configuration securisee de l'encodage stdout/stderr pour Windows
+if sys.platform == 'win32':
+    try:
+        if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 import shutil
 import glob
 

@@ -1,5 +1,6 @@
 @echo off
 setlocal
+chcp 65001 >nul
 echo === Build Xiaomi Wi-Fi Dashboard (Windows) ===
 
 python --version >nul 2>&1

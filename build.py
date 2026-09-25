@@ -6,6 +6,17 @@ Utilise PyInstaller pour générer un exécutable autonome et un package d'archi
 
 import os
 import sys
+
+# Configuration securisee de l'encodage stdout/stderr pour Windows
+if sys.platform == 'win32':
+    try:
+        if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        if sys.stderr and hasattr(sys.stderr, 'reconfigure'):
+            sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 import shutil
 import platform
 import subprocess

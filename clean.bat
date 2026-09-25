@@ -1,5 +1,6 @@
 @echo off
 setlocal
+chcp 65001 >nul
 echo === Nettoyage Xiaomi Wi-Fi Dashboard ===
 
 python clean.py %*
